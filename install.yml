@@ -366,3 +366,14 @@
       when:
         - nfs_enabled
         - not is_nfs_server
+    
+    - name: create backup archive location
+      file:
+        path: "{{ mount_point }}/test_system_backup"
+        state: directory
+        owner: couchbase
+        group: couchbase
+        mode: 777
+      when:
+        - nfs_enabled
+        - not is_nfs_server
