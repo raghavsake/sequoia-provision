@@ -15,6 +15,10 @@
     deb_path: "/tmp/couchbase.deb"
   remote_user: root
   tasks:
+  - name: Unmount all NFS mounts
+    shell: "umount -a -t nfs,nfs4 -f -l"
+    ignore_errors: True
+
   - name: set vm.swappiness to 0
     shell: "echo 0 > /proc/sys/vm/swappiness"
   
@@ -350,7 +354,7 @@
 
     - name: NFS CLIENT | Clean up test backup directory
       file:
-        path: /mnt/nfs_data/test_system_backup
+        path: "{{ mount_point }}/test_system_backup"
         state: absent
       when:
         - nfs_enabled
