@@ -124,7 +124,7 @@ elif [[ "$QUERY_TYPE" == "sgw" ]]; then
     QUERY="SELECT ipaddr FROM \`${BUCKET}\`.\`${SCOPE}\`.\`${COLLECTION}\` WHERE \"${POOL_ID}\" IN poolId AND \"sgw\" IN poolId AND state=\"available\""
 elif [[ "$QUERY_TYPE" == "nfs" ]]; then
     # Query for NFS server: pool_id only (no sgw exclusion)
-    QUERY="SELECT ipaddr FROM \`${BUCKET}\`.\`${SCOPE}\`.\`${COLLECTION}\` WHERE \"nfs_server\" IN poolId AND state=\"available\""
+    QUERY="SELECT ipaddr FROM \`${BUCKET}\`.\`${SCOPE}\`.\`${COLLECTION}\` WHERE \"nfs_server\" IN poolId AND state=\"available\" LIMIT 1"
 else
     # Query for Couchbase Server hosts: pool_id but NOT "sgw" tag
     QUERY="SELECT ipaddr FROM \`${BUCKET}\`.\`${SCOPE}\`.\`${COLLECTION}\` WHERE \"${POOL_ID}\" IN poolId AND \"sgw\" NOT IN poolId AND \"nfs_server\" NOT IN poolId AND state=\"available\""
