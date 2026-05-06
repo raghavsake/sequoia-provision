@@ -264,17 +264,21 @@
 # Install NFS Client on all CB nodes (if nfs_server is provided)
 # Usage: Add -e "nfs_server=<NFS_SERVER_IP>" to enable NFS client setup
 - hosts: "{{ target_hosts }}"
-  gather_facts: yes
+  gather_facts: no
   vars:
     nfs_share: "{{ NFS_SHARE | default('/data') }}"
     mount_point: "{{ MOUNT_POINT | default('/mnt/nfs_data') }}"
     nfs_server_ip: "{{ nfs_server | default('') }}"
   remote_user: root
   tasks:
+    - name: NFS CLIENT | Skip play when NFS setup is not enabled
+      meta: end_play
+      when: nfs_server_ip | length == 0
+
     - name: NFS CLIENT | Check if NFS setup is enabled
       set_fact:
         nfs_enabled: "{{ nfs_server_ip | length > 0 }}"
-        is_nfs_server: "{{ ansible_host == nfs_server_ip or inventory_hostname == nfs_server_ip }}"
+        is_nfs_server: "{{ (ansible_host | default(inventory_hostname)) == nfs_server_ip or inventory_hostname == nfs_server_ip }}"
 
     - name: NFS CLIENT | Update apt cache
       apt:
@@ -343,6 +347,14 @@
         - nfs_enabled
         - not is_nfs_server
         - mount_verify is succeeded
+
+    - name: NFS CLIENT | Clean up test backup directory
+      file:
+        path: /mnt/nfs_data/test_system_backup
+        state: absent
+      when:
+        - nfs_enabled
+        - not is_nfs_server
 
     - name: NFS CLIENT | Installation complete
       debug:
