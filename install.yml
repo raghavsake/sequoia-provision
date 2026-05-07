@@ -15,6 +15,10 @@
     deb_path: "/tmp/couchbase.deb"
   remote_user: root
   tasks:
+  - name: Unmount all NFS mounts
+    shell: "umount -a -t nfs,nfs4 -f -l"
+    ignore_errors: True
+
   - name: set vm.swappiness to 0
     shell: "echo 0 > /proc/sys/vm/swappiness"
   
@@ -261,3 +265,116 @@
         - perform_install | default(true)
         - sgw_port_check is succeeded
 
+# Install NFS Client on all CB nodes (if nfs_server is provided)
+# Usage: Add -e "nfs_server=<NFS_SERVER_IP>" to enable NFS client setup
+- hosts: "{{ target_hosts }}"
+  gather_facts: no
+  vars:
+    nfs_share: "{{ NFS_SHARE | default('/data') }}"
+    mount_point: "{{ MOUNT_POINT | default('/mnt/nfs_data') }}"
+    nfs_server_ip: "{{ nfs_server | default('') }}"
+  remote_user: root
+  tasks:
+    - name: NFS CLIENT | Skip play when NFS setup is not enabled
+      meta: end_play
+      when: nfs_server_ip | length == 0
+
+    - name: NFS CLIENT | Check if NFS setup is enabled
+      set_fact:
+        nfs_enabled: "{{ nfs_server_ip | length > 0 }}"
+        is_nfs_server: "{{ (ansible_host | default(inventory_hostname)) == nfs_server_ip or inventory_hostname == nfs_server_ip }}"
+
+    - name: NFS CLIENT | Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      ignore_errors: True
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Install NFS client packages
+      apt:
+        name: nfs-common
+        state: present
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Verify NFS exports from server
+      shell: "showmount -e {{ nfs_server_ip }}"
+      register: nfs_exports
+      ignore_errors: true
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Display available NFS exports
+      debug:
+        msg: "{{ nfs_exports.stdout_lines }}"
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+        - nfs_exports is succeeded
+
+    - name: NFS CLIENT | Create mount point directory
+      file:
+        path: "{{ mount_point }}"
+        state: directory
+        mode: '0755'
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Mount NFS share
+      mount:
+        src: "{{ nfs_server_ip }}:{{ nfs_share }}"
+        path: "{{ mount_point }}"
+        fstype: nfs
+        opts: defaults,_netdev
+        state: mounted
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Verify mount
+      shell: "df -h | grep nfs"
+      register: mount_verify
+      ignore_errors: true
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Display mount status
+      debug:
+        msg: "{{ mount_verify.stdout_lines }}"
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+        - mount_verify is succeeded
+
+    - name: NFS CLIENT | Clean up test backup directory
+      file:
+        path: "{{ mount_point }}/test_system_backup"
+        state: absent
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Installation complete
+      debug:
+        msg: "NFS client configured - {{ nfs_server_ip }}:{{ nfs_share }} mounted at {{ mount_point }}"
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+    
+    - name: create backup archive location
+      file:
+        path: "{{ mount_point }}/test_system_backup"
+        state: directory
+        owner: couchbase
+        group: couchbase
+        mode: 777
+      when:
+        - nfs_enabled
+        - not is_nfs_server
