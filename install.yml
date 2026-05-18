@@ -361,6 +361,14 @@
         - nfs_enabled
         - not is_nfs_server
 
+    - name: NFS CLIENT | Clean up test continuous backup directory
+      file:
+        path: "{{ mount_point }}/test_system_continuous_backup"
+        state: absent
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
     - name: NFS CLIENT | Installation complete
       debug:
         msg: "NFS client configured - {{ nfs_server_ip }}:{{ nfs_share }} mounted at {{ mount_point }}"
@@ -371,6 +379,17 @@
     - name: create backup archive location
       file:
         path: "{{ mount_point }}/test_system_backup"
+        state: directory
+        owner: couchbase
+        group: couchbase
+        mode: 777
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: create continuous backup archive location
+      file:
+        path: "{{ mount_point }}/test_system_continuous_backup"
         state: directory
         owner: couchbase
         group: couchbase
