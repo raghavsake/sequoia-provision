@@ -97,7 +97,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup archive location
     file:
@@ -105,7 +105,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup s3 location
     file:
@@ -113,7 +113,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup gcp location
     file:
@@ -121,7 +121,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup azure location
     file:
@@ -129,7 +129,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: set /data to be owned by couchbase
     shell: "chown -R couchbase:couchbase /data"
@@ -382,7 +382,7 @@
         state: directory
         owner: couchbase
         group: couchbase
-        mode: 777
+        mode: '0777'
       when:
         - nfs_enabled
         - not is_nfs_server
@@ -393,7 +393,7 @@
         state: directory
         owner: couchbase
         group: couchbase
-        mode: 777
+        mode: '0777'
       when:
         - nfs_enabled
         - not is_nfs_server
