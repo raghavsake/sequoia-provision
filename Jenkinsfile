@@ -145,7 +145,7 @@ pipeline {
                     withCredentials([
                         usernamePassword(credentialsId: 'root', usernameVariable: 'SSH_USERNAME', passwordVariable: 'SSH_PASSWORD'),
                         usernamePassword(credentialsId: 'qe_db_cluster', usernameVariable: 'CONFIG_USERNAME', passwordVariable: 'CONFIG_PASSWORD'),
-                        usernamePassword(credentialsId: 'BACKUP_RESTORE_SYSTEMTEST_S3_ACCESS_KEYS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
+                        [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'BACKUP_RESTORE_SYSTEMTEST_S3_ACCESS_KEYS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
                     ]) {
                         if (!params.SKIP_INSTALL) {
                             echo ">>> Starting Couchbase deployment..."
