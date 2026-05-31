@@ -203,6 +203,34 @@
         msg: "S3 credentials configured in /etc/profile.d/s3_credentials.sh"
       when: s3_enabled
 
+# Set Azure credentials as environment variables (if provided)
+- hosts: "{{ target_hosts }}"
+  gather_facts: no
+  vars:
+    azure_account: "{{ azure_storage_account | default('') }}"
+    azure_key: "{{ azure_storage_key | default('') }}"
+    azure_endpoint: "{{ azure_storage_endpoint | default('') }}"
+  remote_user: root
+  tasks:
+    - name: AZURE CREDENTIALS | Check if Azure setup is enabled
+      set_fact:
+        azure_enabled: "{{ azure_account | length > 0 and azure_key | length > 0 }}"
+
+    - name: AZURE CREDENTIALS | Create environment file for Azure credentials
+      copy:
+        dest: /etc/profile.d/azure_credentials.sh
+        content: |
+          export AZURE_STORAGE_ACCOUNT="{{ azure_account }}"
+          export AZURE_STORAGE_KEY="{{ azure_key }}"
+          export AZURE_STORAGE_ENDPOINT="{{ azure_endpoint }}"
+        mode: "0644"
+      when: azure_enabled
+
+    - name: AZURE CREDENTIALS | Configuration complete
+      debug:
+        msg: "Azure credentials configured in /etc/profile.d/azure_credentials.sh"
+      when: azure_enabled
+
 # Install Sync Gateway (if sgw_target_hosts is provided)
 - hosts: "{{ sgw_target_hosts | default('none') }}"
   gather_facts: no

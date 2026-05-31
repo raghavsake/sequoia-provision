@@ -145,7 +145,9 @@ pipeline {
                     withCredentials([
                         usernamePassword(credentialsId: 'root', usernameVariable: 'SSH_USERNAME', passwordVariable: 'SSH_PASSWORD'),
                         usernamePassword(credentialsId: 'qe_db_cluster', usernameVariable: 'CONFIG_USERNAME', passwordVariable: 'CONFIG_PASSWORD'),
-                        [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'BACKUP_RESTORE_SYSTEMTEST_S3_ACCESS_KEYS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']
+                        [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'BACKUP_RESTORE_SYSTEMTEST_S3_ACCESS_KEYS', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+                        usernamePassword(credentialsId: 'BACKUP_RESTORE_SYSTEMTEST_AZURE_ACCESS_KEYS', usernameVariable: 'AZURE_STORAGE_ACCOUNT', passwordVariable: 'AZURE_STORAGE_KEY'),
+                        string(credentialsId: 'BACKUP_RESTORE_SYSTEMTEST_AZURE_ENDPOINT', variable: 'AZURE_STORAGE_ENDPOINT')
                     ]) {
                         if (!params.SKIP_INSTALL) {
                             echo ">>> Starting Couchbase deployment..."
@@ -156,6 +158,9 @@ pipeline {
                                     export ANSIBLE_SSH_PASSWORD="$SSH_PASSWORD"
                                     export AWS_ACCESS_KEY_ID='${AWS_ACCESS_KEY_ID}'
                                     export AWS_SECRET_ACCESS_KEY='${AWS_SECRET_ACCESS_KEY}'
+                                    export AZURE_STORAGE_ACCOUNT='${AZURE_STORAGE_ACCOUNT}'
+                                    export AZURE_STORAGE_KEY='${AZURE_STORAGE_KEY}'
+                                    export AZURE_STORAGE_ENDPOINT='${AZURE_STORAGE_ENDPOINT}'
                                     ./deploy.sh \
                                         --cb-pool-id ${params.COMPONENT} \
                                         --cb-version ${params.CB_VERSION} \
