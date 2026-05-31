@@ -3,7 +3,7 @@
 # Usage: ansible-playbook -i ansible/hosts install.yml -e "target_hosts=centos2" -e "FLAVOR=trinity" -e "VER=7.6.8" -e "BUILD_NO=7151"
 # With SGW: ansible-playbook -i ansible/hosts install.yml -e "target_hosts=centos2" -e "FLAVOR=trinity" -e "VER=7.6.8" -e "BUILD_NO=7151" -e "sgw_target_hosts=syncgateways" -e "SGW_VER=3.3.0" -e "SGW_BUILD_NO=271"
 
-- hosts: "{{ target_hosts }}" 
+- hosts: "{{ target_hosts }}"
   vars:
     ver_no: "{{VER|default('4.5.0')}}"
     build_no:  "{{BUILD_NO|default(2601)}}"
@@ -21,76 +21,76 @@
 
   - name: set vm.swappiness to 0
     shell: "echo 0 > /proc/sys/vm/swappiness"
-  
+
   - name: disable thp
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
     ignore_errors: True
-  
+
   - name: remove core conf file if any
     shell: "rm -f /etc/security/limits.d/core.conf"
     ignore_errors: True
-  
+
   - name: create core conf file
     shell: "touch /etc/security/limits.d/core.conf"
-  
+
   - name: append hard core limit
     shell: "echo 'couchbase       hard        core        unlimited' >> /etc/security/limits.d/core.conf"
-  
+
   - name: append soft core limit
     shell: "echo 'couchbase       soft        core        unlimited' >> /etc/security/limits.d/core.conf"
-  
+
   - name: set default limit core to infinity step 1
     shell: "echo '[Manager]' > /etc/systemd/system.conf"
-  
+
   - name: set default limit core to infinity step 2
     shell: "echo 'DefaultLimitCORE=infinity' >> /etc/systemd/system.conf"
-  
+
   - name: reload systemctl daemon
     shell: "systemctl daemon-reexec"
-  
+
   - name: disable thp defrag
     shell: "echo never > /sys/kernel/mm/transparent_hugepage/defrag"
     ignore_errors: True
-  
+
   - name: cleanup old pkg dirs
     shell: "rm {{deb_path}} 2>/dev/null"
     ignore_errors: True
-  
+
   - name: rm locks
     shell: "rm /var/lib/dpkg/lock"
     ignore_errors: True
-  
+
   - name: rm front end locks
     shell: "rm /var/lib/dpkg/lock-frontend"
     ignore_errors: True
-  
+
   - name: configure
     shell: "dpkg --configure -a"
-  
+
   - name: stop couchbase
     shell: "ps aux | grep 'couchbase' | awk '{print $2}' | xargs kill -s 9"
     ignore_errors: True
-  
+
   - name: stop memcached
     shell: "ps aux | grep 'memcached' | awk '{print $2}' | xargs kill -s 9"
     ignore_errors: True
-  
+
   - name: uninstall couchbase
     apt: name=couchbase-server state=absent
-  
+
   - name: rm opt dir
     shell: "rm -rf /opt/couchbase"
-  
+
   - name: rm data dir
     shell: "rm -rf /data/*"
-  
+
   - name: rm index dir
     shell: "rm -rf /index/*"
-  
+
   - name: remove all hidden files
     shell: "rm -rf /data/.*"
     ignore_errors: True
-  
+
   - name: create couchbase directory
     file:
       path: /data/couchbase
@@ -98,7 +98,7 @@
       owner: couchbase
       group: couchbase
       mode: '0777'
-  
+
   - name: create backup archive location
     file:
       path: /data/archive
@@ -106,7 +106,7 @@
       owner: couchbase
       group: couchbase
       mode: '0777'
-  
+
   - name: create backup s3 location
     file:
       path: /data/s3
@@ -114,7 +114,7 @@
       owner: couchbase
       group: couchbase
       mode: '0777'
-  
+
   - name: create backup gcp location
     file:
       path: /data/gcp
@@ -122,7 +122,7 @@
       owner: couchbase
       group: couchbase
       mode: '0777'
-  
+
   - name: create backup azure location
     file:
       path: /data/azure
@@ -130,17 +130,17 @@
       owner: couchbase
       group: couchbase
       mode: '0777'
-  
+
   - name: set /data to be owned by couchbase
     shell: "chown -R couchbase:couchbase /data"
-  
+
   - name: chmod /data to 777
     shell: "chmod -R 777 /data"
-  
+
   - name: stop memcached
     shell: "ps aux | grep 'memcached' | awk '{print $2}' | xargs kill -s 9"
     ignore_errors: True
-    
+
 - hosts: "{{ target_hosts }}"
   serial: 1
   vars:
@@ -155,11 +155,11 @@
   remote_user: root
   tasks:
   - debug: msg="Download {{build_url}}"
-  
+
   - name: download binary
     get_url: url="{{build_url}}" dest="{{deb_path}}"
- 
-- hosts: "{{ target_hosts }}" 
+
+- hosts: "{{ target_hosts }}"
   vars:
     ver_no: "{{VER|default('4.5.0')}}"
     build_no:  "{{BUILD_NO|default(2601)}}"
@@ -173,7 +173,7 @@
   tasks:
   - name: install couchbase
     apt: deb="{{deb_path}}"
-  
+
   - name: wait for install done
     wait_for: port=8091 delay=10
 
@@ -269,7 +269,7 @@
 
     - name: SYNC GATEWAY | Install sync_gateway dpkg
       shell: "dpkg -i --force-overwrite --force-confnew /tmp/{{ sgw_package }}"
-      when: 
+      when:
         - perform_install | default(true)
         - sgw_download is succeeded
 
@@ -287,7 +287,7 @@
     - name: SYNC GATEWAY | Verify installation success
       debug:
         msg: "Sync Gateway installed and running on port 4984"
-      when: 
+      when:
         - perform_install | default(true)
         - sgw_port_check is succeeded
 
@@ -383,7 +383,6 @@
       file:
         path: "{{ mount_point }}/test_system_backup"
         state: absent
-      run_once: true
       when:
         - nfs_enabled
         - not is_nfs_server
@@ -392,7 +391,6 @@
       file:
         path: "{{ mount_point }}/test_system_continuous_backup"
         state: absent
-      run_once: true
       when:
         - nfs_enabled
         - not is_nfs_server
@@ -403,7 +401,7 @@
       when:
         - nfs_enabled
         - not is_nfs_server
-    
+
     - name: create backup archive location
       file:
         path: "{{ mount_point }}/test_system_backup"
