@@ -177,6 +177,32 @@
   - name: wait for install done
     wait_for: port=8091 delay=10
 
+# Set S3 credentials as environment variables (if provided)
+- hosts: "{{ target_hosts }}"
+  gather_facts: no
+  vars:
+    s3_access_key: "{{ aws_access_key_id | default('') }}"
+    s3_secret_key: "{{ aws_secret_access_key | default('') }}"
+  remote_user: root
+  tasks:
+    - name: S3 CREDENTIALS | Check if S3 setup is enabled
+      set_fact:
+        s3_enabled: "{{ s3_access_key | length > 0 and s3_secret_key | length > 0 }}"
+
+    - name: S3 CREDENTIALS | Create environment file for S3 credentials
+      copy:
+        dest: /etc/profile.d/s3_credentials.sh
+        content: |
+          export AWS_ACCESS_KEY_ID="{{ s3_access_key }}"
+          export AWS_SECRET_ACCESS_KEY="{{ s3_secret_key }}"
+        mode: "0644"
+      when: s3_enabled
+
+    - name: S3 CREDENTIALS | Configuration complete
+      debug:
+        msg: "S3 credentials configured in /etc/profile.d/s3_credentials.sh"
+      when: s3_enabled
+
 # Install Sync Gateway (if sgw_target_hosts is provided)
 - hosts: "{{ sgw_target_hosts | default('none') }}"
   gather_facts: no

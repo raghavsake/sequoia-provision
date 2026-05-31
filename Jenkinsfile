@@ -144,7 +144,8 @@ pipeline {
 
                     withCredentials([
                         usernamePassword(credentialsId: 'root', usernameVariable: 'SSH_USERNAME', passwordVariable: 'SSH_PASSWORD'),
-                        usernamePassword(credentialsId: 'qe_db_cluster', usernameVariable: 'CONFIG_USERNAME', passwordVariable: 'CONFIG_PASSWORD')
+                        usernamePassword(credentialsId: 'qe_db_cluster', usernameVariable: 'CONFIG_USERNAME', passwordVariable: 'CONFIG_PASSWORD'),
+                        usernamePassword(credentialsId: 'BACKUP_RESTORE_SYSTEMTEST_S3_ACCESS_KEYS', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
                     ]) {
                         if (!params.SKIP_INSTALL) {
                             echo ">>> Starting Couchbase deployment..."
@@ -153,6 +154,8 @@ pipeline {
                                     export CONFIG_PASSWORD='${CONFIG_PASSWORD}'
                                     export SSH_PASSWORD='${SSH_PASSWORD}'
                                     export ANSIBLE_SSH_PASSWORD="$SSH_PASSWORD"
+                                    export AWS_ACCESS_KEY_ID='${AWS_ACCESS_KEY_ID}'
+                                    export AWS_SECRET_ACCESS_KEY='${AWS_SECRET_ACCESS_KEY}'
                                     ./deploy.sh \
                                         --cb-pool-id ${params.COMPONENT} \
                                         --cb-version ${params.CB_VERSION} \
