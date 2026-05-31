@@ -97,7 +97,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup archive location
     file:
@@ -105,7 +105,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup s3 location
     file:
@@ -113,7 +113,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup gcp location
     file:
@@ -121,7 +121,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: create backup azure location
     file:
@@ -129,7 +129,7 @@
       state: directory
       owner: couchbase
       group: couchbase
-      mode: 777
+      mode: '0777'
   
   - name: set /data to be owned by couchbase
     shell: "chown -R couchbase:couchbase /data"
@@ -314,6 +314,7 @@
       apt:
         update_cache: yes
         cache_valid_time: 3600
+      ignore_errors: True
       when:
         - nfs_enabled
         - not is_nfs_server
@@ -382,6 +383,16 @@
       file:
         path: "{{ mount_point }}/test_system_backup"
         state: absent
+      run_once: true
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: NFS CLIENT | Clean up test continuous backup directory
+      file:
+        path: "{{ mount_point }}/test_system_continuous_backup"
+        state: absent
+      run_once: true
       when:
         - nfs_enabled
         - not is_nfs_server
@@ -399,7 +410,20 @@
         state: directory
         owner: couchbase
         group: couchbase
-        mode: 777
+        mode: '0777'
+      run_once: true
+      when:
+        - nfs_enabled
+        - not is_nfs_server
+
+    - name: create continuous backup archive location
+      file:
+        path: "{{ mount_point }}/test_system_continuous_backup"
+        state: directory
+        owner: couchbase
+        group: couchbase
+        mode: '0777'
+      run_once: true
       when:
         - nfs_enabled
         - not is_nfs_server
